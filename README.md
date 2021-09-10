@@ -1,4 +1,4 @@
-# Deploy a static web page using an IaaC pipeline
+# Deploy a static web page helm and traefik
 
 The purpose of this lab is to develop a full provisioned pipeline to deploy a static web page.
 
