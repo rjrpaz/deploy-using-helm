@@ -2,6 +2,8 @@
 
 The purpose of this lab is to develop a full provisioned pipeline to deploy a static web page.
 
+You can clone [this](https://github.com/rjrpaz/deploy-using-helm) repository to get some of the files that are we going to use during the lab.
+
 ## Objectives
 
 1. Build your own Docker image that can serve a static "Hello World" HTML page
@@ -12,217 +14,29 @@ The purpose of this lab is to develop a full provisioned pipeline to deploy a st
 
 1. Make Traefik an ingress point to access the "Hello World" page
 
-1. Bonus: Make the "Hello World" page accessible locally at [http://hello-world.local](http://hello-world.local)
+1. Make the "Hello World" page accessible locally at [http://hello-world.local](http://hello-world.local)
 
 ## Requirements
 
-For the purpose of this lab we are going to use a CentOS 7. Instructions will also provide the installation of required tools.
+For the purpose of this lab we are going to use a CentOS 7.
 
 ### Pre-requisite tools
 
-Install the following tools:
+We are going to use the following tools (click in the link to see how to install each tool):
 
-- docker
+- [Docker](./Docker.md)
 
-- kubernetes
+- [Kubernetes](./Kubernetes.md)
 
-- helm
-
-#### Docker
-
-Reference: [https://docs.docker.com/engine/install/centos/](https://docs.docker.com/engine/install/centos/)
-
-1. Install yum-utils
-
-    ```console
-    sudo yum install -y yum-utils
-    ```
-
-1. Add docker repo
-
-    ```console
-    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    ```
-
-1. Install docker engine
-
-    ```console
-    sudo yum install -y docker-ce docker-ce-cli containerd.io
-    ```
-
-1. Enable docker service
-
-    ```console
-    sudo systemctl enable --now docker
-    ```
-
-1. Check docker service status
-
-    ```console
-    sudo systemctl status docker
-    ```
-
-1. Create a docker group (if required)
-
-    ```console
-    sudo groupadd docker
-    ```
-
-1. Add your personal user to the docker group
-
-    ```console
-    sudo usermod -aG docker $USER
-    ```
-
-    You need to re-login for this last modification to be active.
-
-1. Run a test to confirm docker is working
-
-    ```console
-    [roberto@vmlab01 ~]$ docker run hello-world
-
-    Unable to find image 'hello-world:latest' locally
-    latest: Pulling from library/hello-world
-    b8dfde127a29: Pull complete
-    Digest: sha256:7d91b69e04a9029b99f3585aaaccae2baa80bcf318f4a5d2165a9898cd2dc0a1
-    Status: Downloaded newer image for hello-world:latest
-
-    Hello from Docker!
-       ...
-    ```
-
-1. If you get the following error when ran the previous command:
-
-    *Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/version": dial unix /var/run/docker.sock: connect: permission denied*
-
-    Run the following command:
-
-    ```console
-    sudo chgrp docker /var/run/docker.sock
-    ```
-
-    and try again
-
-#### Kubernetes and related tools
-
-References:
-
-- [https://minikube.sigs.k8s.io/docs/start/](https://minikube.sigs.k8s.io/docs/start/)
-
-- [https://kubernetes.io/docs/tasks/tools/](https://kubernetes.io/docs/tasks/tools/)
-
-- [https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
-
-1. Install **minikube**
-
-    ```console
-    sudo curl -o /usr/local/sbin/minikube -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-    ```
-
-1. Add execution permissions to the binary
-
-    ```console
-    sudo chmod ugo+x /usr/local/sbin/minikube
-    ```
-
-1. Start kubernetes cluster
-
-    ```console
-    minikube start
-    ```
-
-    (this may takes a few minutes)
-
-1. Test health of kubernetes cluster
-
-    ```console
-    [roberto@vmlab01 Helm-test]$ minikube status
-    minikube
-    type: Control Plane
-    host: Running
-    kubelet: Running
-    apiserver: Running
-    kubeconfig: Configured
-    ```
-
-1. Install **kubectl**
-
-    ```console
-    sudo curl -o /usr/local/bin/kubectl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    ```
-
-1. Add execution permissions to the binary
-
-    ```console
-    sudo chmod ugo+x /usr/local/bin/kubectl
-    ```
-
-1. Check communication with cluster
-
-    ```console
-    [roberto@vmlab01 Helm-test]$ kubectl get nodes
-    NAME       STATUS   ROLES                  AGE   VERSION
-    minikube   Ready    control-plane,master   72s   v1.22.1
-    ```
-
-#### Helm
-
-References:
-
-- [https://helm.sh/docs/intro/install/](https://helm.sh/docs/intro/install/)
-
-1. Download helm package
-
-    ```console
-    wget https://get.helm.sh/helm-v3.7.0-rc.2-linux-amd64.tar.gz
-    ```
-
-1. Unpack the downloaded package
-
-    ```console
-    tar -zxvf helm-v3.7.0-rc.2-linux-amd64.tar.gz
-    ```
-
-1. Copy the binary to a proper destination
-
-    ```console
-    sudo cp linux-amd64/helm /usr/local/bin/
-    ```
-
-1. Add execution permissions to the binary (if needed)
-
-    ```console
-    sudo chmod ugo+x /usr/local/bin/helm
-    ```
-
-1. Test the command
-
-    ```console
-    [roberto@vmlab01 ~]$ helm help
-    The Kubernetes package manager
-
-    Common actions for Helm:
-
-    - helm search:    search for charts
-    - helm pull:      download a chart to your local directory to view
-    - helm install:   upload the chart to Kubernetes
-    - helm list:      list releases of charts
-        ...
-    ```
+- [Helm](./Helm.md)
 
 ## Deployment step by step
 
 All required files and scripts for this deployment are stored here: [https://github.com/rjrpaz/deploy-using-helm](https://github.com/rjrpaz/deploy-using-helm)
 
-You can clone this repository to avoid unnecesary typing:
-
-```console
-git clone https://github.com/rjrpaz/deploy-using-helm.git
-```
-
 I will use my docker user (rjrpaz) for tagging and uploading the image to the registry. I encourage you to replace this with your own user if you are trying to replicate these steps.
 
-### Build your own Docker image that can serve a static "Hello World" HTML page
+## Build your own Docker image that can serve a static "Hello World" HTML page
 
 This image is created using a very simple *Dockerfile*.
 
@@ -302,7 +116,7 @@ This image is created using a very simple *Dockerfile*.
     docker push rjrpaz/tr-webapp:latest
     ```
 
-### Deploy docker image as a container in a local Kubernetes cluster using helm
+## Deploy docker image as a container in a local Kubernetes cluster using helm
 
 To running this we are going to use an isolated namespace (*tr-webapp-ns*) in the cluster.
 
@@ -386,7 +200,7 @@ To running this we are going to use an isolated namespace (*tr-webapp-ns*) in th
 
 1. Press <kbd>Ctrl + C</kbd> to interrupt the port forwarding
 
-### Deploy a Traefik container in the same local Kubernetes cluster using helm
+## Deploy a Traefik container in the same local Kubernetes cluster using helm
 
 For this step we are going to use a public helm repos.
 
@@ -416,3 +230,9 @@ For this step we are going to use a public helm repos.
     tr-webapp-7fd9455889-qqmql   1/1     Running   0          13m
     traefik-7499c455c-spr8b      1/1     Running   0          22s
     ```
+
+## Make Traefik an ingress point to access the "Hello World" page
+
+References:
+
+- [https://minikube.sigs.k8s.io/docs/handbook/accessing/](https://minikube.sigs.k8s.io/docs/handbook/accessing/)
