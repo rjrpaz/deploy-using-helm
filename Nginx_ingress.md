@@ -16,12 +16,6 @@ References:
     minikube addons enable ingress
     ```
 
-1. If you are using *minikube*, confirm that ingress addon is enabled
-
-    ```console
-    minikube addons enable ingress
-    ```
-
 1. Create a namespace to run the deployments
 
     ```console
