@@ -30,294 +30,23 @@ We are going to use the following tools (click in the link to see how to install
 
 - [Helm](./Helm.md)
 
-## Deployment step by step
+## Build of the components
 
-All required files and scripts for this deployment are stored here: [https://github.com/rjrpaz/deploy-using-helm](https://github.com/rjrpaz/deploy-using-helm)
+All required files and scripts for this deployment are included in this project.
 
-I will use my docker user (rjrpaz) for tagging and uploading the image to the registry. I encourage you to replace this with your own user if you are trying to replicate these steps.
+- How to create the docker image: [./docker/README.md](./docker/README.md)
 
-## Build your own Docker image that can serve a static "Hello World" HTML page
+- How to create the helm chart: [./helm/README.md](./helm/README.md)
 
-This image is created using a very simple *Dockerfile*.
-
-1. Change to directory *deploy-using-helm*
-
-    ```console
-    cd deploy-using-helm/docker
-    ```
-
-    This is the content of Dockerfile:
-
-    ```console
-    [roberto@vmlab01 ]$ cat Dockerfile
-
-    FROM nginx:1.21.1-alpine
-    EXPOSE 80/tcp
-    RUN echo "Hello World" > /usr/share/nginx/html/index.html
-    ```
-
-1. Build the docker image
-
-    ```console
-    docker build -t rjrpaz/tr-webapp:1.0.0 .
-    ```
-
-1. Run the container
-
-    ```console
-    docker run -p 8080:80 -d rjrpaz/tr-webapp:1.0.0
-    ```
-
-    Access to the following url [http://localhost:8080](http://localhost:8080). You should see something like this:
-
-    ![Main page](./images/Challenge-01.PNG)
-
-1. Stop the container
-
-    ```console
-    docker stop $(docker ps -a -q  --filter ancestor=rjrpaz/tr-webapp:1.0.0)
-    ```
-
-1. Use *docker ps* to confirm the container is not running anymore.
-
-1. Before pushing this images to Docker hub, we have to login first:
-
-    ```console
-    [roberto@vmlab01 ]$ docker login
-    Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
-    Username: rjrpaz
-        ...
-    Login Succeeded
-    ```
-
-1. Now we are allowed to push the image to the registry:
-
-    ```console
-    [roberto@vmlab01 ]$ docker push rjrpaz/tr-webapp:1.0.0
-    The push refers to repository [docker.io/rjrpaz/tr-webapp]
-    b2bad1512e02: Pushed
-    45d993692050: Mounted from library/nginx
-    1ea998b95474: Mounted from library/nginx
-    95b99a5c3767: Mounted from library/nginx
-    fc03e3cb8568: Mounted from library/nginx
-    24934e5e6c61: Mounted from library/nginx
-    e2eb06d8af82: Mounted from library/nginx
-    1.0.0: digest: sha256:8979e04523669748441a58af0ea3547282ad7674133e7bd359b883da2cb4a7d0 size: 1775
-    [roberto@vmlab01 ]$
-    ```
-
-1. We can also upload the same image using the "latest" tag:
-
-    ```console
-    docker tag rjrpaz/tr-webapp:1.0.0 rjrpaz/tr-webapp:latest
-    ```
-
-    ```console
-    docker push rjrpaz/tr-webapp:latest
-    ```
-
-## Deploy docker image as a container in a local Kubernetes cluster using helm
-
-To running this we are going to use an isolated namespace (*tr-webapp-ns*) in the cluster.
-
-1. Create the cluster namespace
-
-    ```console
-    kubectl create namespace tr-webapp-ns
-    ```
-
-1. Create the helm char skeleton
-
-    ```console
-    helm create tr-webapp
-    ```
-
-1. Modify repository in file *tr-webapp/values.yaml*. Replace:
-
-    ```console
-    repository: nginx
-    ```
-
-    with:
-
-    ```console
-    repository: rjrpaz/tr-webapp
-    ```
-
-1. Modify tag in file *tr-webapp/values.yaml*. Replace:
-
-    ```console
-    tag: ""
-    ```
-
-    with:
-
-    ```console
-    tag: "1.0.0"
-    ```
-
-1. Check helm chart integrity:
-
-    ```console
-    [roberto@vmlab01 ]$ helm lint ./tr-webapp
-    ==> Linting ./tr-webapp
-    [INFO] Chart.yaml: icon is recommended
-
-    1 chart(s) linted, 0 chart(s) failed
-    ```
-
-1. Install the service using this new chart:
-
-    ```console
-    [roberto@vmlab01 ]$ helm install tr-webapp ./tr-webapp --namespace tr-webapp-ns
-    NAME: tr-webapp
-    LAST DEPLOYED: Thu Sep  9 15:30:23 2021
-    NAMESPACE: tr-webapp-ns
-    STATUS: deployed
-    REVISION: 1
-    NOTES:
-    1. Get the application URL by running these commands:
-    export POD_NAME=$(kubectl get pods --namespace tr-webapp-ns -l "app.kubernetes.io/name=tr-webapp,app.kubernetes.io/instance=tr-webapp" -o jsonpath="{.items[0].metadata.name}")
-    export CONTAINER_PORT=$(kubectl get pod --namespace tr-webapp-ns $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
-    echo "Visit http://127.0.0.1:8080 to use your application"
-    kubectl --namespace tr-webapp-ns port-forward $POD_NAME 8080:$CONTAINER_PORT
-    ```
-
-1. To test this image, we should run the command provided by previous step:
-
-    ```console
-    export POD_NAME=$(kubectl get pods --namespace tr-webapp-ns -l "app.kubernetes.io/name=tr-webapp,app.kubernetes.io/instance=tr-webapp" -o jsonpath="{.items[0].metadata.name}")
-    export CONTAINER_PORT=$(kubectl get pod --namespace tr-webapp-ns $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
-    kubectl --namespace tr-webapp-ns port-forward $POD_NAME 8080:$CONTAINER_PORT
-    ```
-
-1. Access to the same url [http://localhost:8080](http://localhost:8080) and you should see the same sample webpage as before:
-
-    ```console
-    [roberto@vmlab01 ~]$ curl http://127.0.0.1:8080
-    Hello World
-    ```
-
-1. Press <kbd>Ctrl + C</kbd> to interrupt the port forwarding
-
-## Deploy a Traefik container in the same local Kubernetes cluster using helm
-
-For this step we are going to use a public helm repos.
-
-1. Add helm repo for *traefik*
-
-    ```console
-    helm repo add traefik https://helm.traefik.io/traefik
-    ```
-
-1. Update helm
-
-    ```console
-    helm repo update
-    ```
-
-1. Install traefik
-
-    ```console
-    helm install traefik traefik/traefik --namespace tr-webapp-ns
-    ```
-
-1. List pods in the namespace to check status
-
-    ```console
-    [roberto@vmlab01 helm]$ kubectl get pods --namespace tr-webapp-ns
-
-    NAME                         READY   STATUS    RESTARTS   AGE
-    tr-webapp-86b97d69cc-znpvl   1/1     Running   0          4m6s
-    traefik-7594596bbc-6mzg9     1/1     Running   0          39s
-    ```
-
-## Make Traefik an ingress point to access the "Hello World" page
-
-Alternative solution using nginx ingress [here](./Nginx_ingress.md)
-
-Alternative using traefik + yaml files [here](./Traefik-yaml.md)
+## Deploy the app
 
 References:
 
-- [https://minikube.sigs.k8s.io/docs/handbook/accessing/](https://minikube.sigs.k8s.io/docs/handbook/accessing/)
+- [https://doc.traefik.io/traefik/v2.3/routing/providers/kubernetes-ingress/](https://doc.traefik.io/traefik/v2.3/routing/providers/kubernetes-ingress/)
 
-1. Create a yaml file that includes the ingress configuration for the service:
+- [https://doc.traefik.io/traefik/v1.7/user-guide/kubernetes/](https://doc.traefik.io/traefik/v1.7/user-guide/kubernetes/) (this is from a previous version of trafik but the idea is basically the same)
 
-    *[ingress.yaml](./helm/ingress.yaml)*:
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-    name: traefik
-    spec:
-    selector:
-        k8s-app: traefik-ingress-lb
-    ports:
-    - name: web
-        port: 80
-        targetPort: 8080
-    ---
-    apiVersion: networking.k8s.io/v1beta1
-    kind: Ingress
-    metadata:
-    name: myingress
-    annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: web
-
-    spec:
-    rules:
-        - host: hello-world.local
-        http:
-            paths:
-            - path: /
-                backend:
-                serviceName: tr-webapp
-                servicePort: 8080
-    ```
-
-1. Apply the yaml file:
-
-    ```console
-    [roberto@vmlab01 traefik-yaml]$ kubectl apply -f ingress.yaml --namespace tr-webapp-ns
-    Warning: networking.k8s.io/v1beta1 Ingress is deprecated in v1.19+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress
-    ingress.networking.k8s.io/myingress created
-    ```
-
-1. Check service and ingress resources
-
-    ```console
-    [roberto@vmlab01 helm]$ kubectl get svc --namespace tr-webapp-ns
-    NAME        TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
-    tr-webapp   NodePort       10.97.69.37    <none>        8080:32725/TCP               16m
-    traefik     LoadBalancer   10.100.12.11   <pending>     80:32039/TCP,443:31210/TCP   13m
-    ```
-
-    ```console
-    [roberto@vmlab01 helm]$ kubectl get ingress --namespace tr-webapp-ns
-    NAME        CLASS    HOSTS               ADDRESS        PORTS   AGE
-    myingress   <none>   hello-world.local   192.168.49.2   80      4m5s
-    ```
-
-    (you should wait a few seconds until "ADDRESS" list an IP address for the ingress resource)
-
-1. Create a static entry in /etc/hosts to point to the new hostname hello-world.local
-
-    ```console
-    sudo echo "$(minikube ip) hello-world.local" >> /etc/hosts
-    ```
-
-1. Now you should be able to access the url:
-
-    ```console
-    [roberto@vmlab01 helm]$ curl hello-world.local
-    Hello World
-    ```
-
-## Summary
-
-These are the required steps, assuming you already have all tools installed
+These are the required steps, assuming you already have all required tools already installed.
 
 1. Clone this project in an empty directory
 
@@ -326,7 +55,13 @@ These are the required steps, assuming you already have all tools installed
     cd deploy-using-helm
     ```
 
-1. Create the namespace
+1. Assure that ingress addon for minikube is already installed
+
+    ```console
+    minikube addons enable ingress
+    ```
+
+1. Create a namespace
 
     ```console
     kubectl create namespace tr-webapp-ns
@@ -340,8 +75,36 @@ These are the required steps, assuming you already have all tools installed
 
 1. Install traefik
 
+    1. Add helm repo for *traefik*
+
+        ```console
+        helm repo add traefik https://helm.traefik.io/traefik
+        ```
+
+    1. Update helm
+
+        ```console
+        helm repo update
+        ```
+
+    1. Install traefik
+
+        ```console
+        helm install traefik traefik/traefik --namespace tr-webapp-ns
+        ```
+
+1. List pods in the namespace to check status
+
     ```console
-    helm install traefik traefik/traefik --namespace tr-webapp-ns
+    kubectl get pods --namespace tr-webapp-ns
+    ```
+
+    It should return at least two running pods (our app and traefik service):
+
+    ```console
+    NAME                         READY   STATUS    RESTARTS   AGE
+    tr-webapp-86b97d69cc-znpvl   1/1     Running   0          4m6s
+    traefik-7594596bbc-6mzg9     1/1     Running   0          39s
     ```
 
 1. Apply the ingress file:
@@ -350,10 +113,39 @@ These are the required steps, assuming you already have all tools installed
     kubectl apply -f helm/ingress.yaml --namespace tr-webapp-ns
     ```
 
+1. Check service resources
+
+    ```console
+    kubectl get svc --namespace tr-webapp-ns
+    ```
+
+    It should return something like this:
+
+    ```console
+    NAME        TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+    tr-webapp   NodePort       10.103.93.206   <none>        8080:32422/TCP               9m53s
+    traefik     LoadBalancer   10.96.143.228   <pending>     80:31004/TCP,443:31250/TCP   8m16s
+    ```
+
+1. Check ingress resources
+
+    ```console
+    kubectl get ingress --namespace tr-webapp-ns
+    ```
+
+    It should return something like this:
+
+    ```console
+    NAME        CLASS    HOSTS               ADDRESS        PORTS   AGE
+    myingress   <none>   hello-world.local   192.168.49.2   80      6m24s
+    ```
+
+    (you should wait a few seconds until "ADDRESS" list an IP address for the ingress resource)
+
 1. Create a static entry in /etc/hosts to point to the new hostname hello-world.local
 
     ```console
-    sudo echo "$(minikube ip) hello-world.local" >> /etc/hosts
+    echo "$(minikube ip) hello-world.local" | sudo tee -a /etc/hosts
     ```
 
 1. Check reachability to the url:
@@ -363,6 +155,14 @@ These are the required steps, assuming you already have all tools installed
     ```
 
     You should get a "Hello World" message
+
+## Alternative solutions to the same issue
+
+While I was investigating this, I tried some alternative solutions listed below:
+
+- Use nginx ingress [here](./Nginx_ingress.md)
+
+- Use traefik + yaml files [here](./Traefik-yaml.md)
 
 ## Next steps
 
