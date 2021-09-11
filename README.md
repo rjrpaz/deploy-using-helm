@@ -166,7 +166,7 @@ To running this we are going to use an isolated namespace (*tr-webapp-ns*) in th
     1 chart(s) linted, 0 chart(s) failed
     ```
 
-1. Install the image using this new chart:
+1. Install the service using this new chart:
 
     ```console
     [roberto@vmlab01 ]$ helm install tr-webapp ./tr-webapp --namespace tr-webapp-ns
@@ -219,16 +219,17 @@ For this step we are going to use a public helm repos.
 1. Install traefik
 
     ```console
-    helm install traefik-ingress-service traefik/traefik --namespace tr-webapp-ns
+    helm install traefik traefik/traefik --namespace tr-webapp-ns
     ```
 
 1. List pods in the namespace to check status
 
     ```console
-    [roberto@vmlab01 ]$ kubectl get pods --namespace tr-webapp-ns
+    [roberto@vmlab01 helm]$ kubectl get pods --namespace tr-webapp-ns
+
     NAME                         READY   STATUS    RESTARTS   AGE
-    tr-webapp-7fd9455889-qqmql   1/1     Running   0          13m
-    traefik-7499c455c-spr8b      1/1     Running   0          22s
+    tr-webapp-86b97d69cc-znpvl   1/1     Running   0          4m6s
+    traefik-7594596bbc-6mzg9     1/1     Running   0          39s
     ```
 
 ## Make Traefik an ingress point to access the "Hello World" page
@@ -241,10 +242,134 @@ References:
 
 - [https://minikube.sigs.k8s.io/docs/handbook/accessing/](https://minikube.sigs.k8s.io/docs/handbook/accessing/)
 
-## TODO
+1. Create a yaml file that includes the ingress configuration for the service:
 
-- Make ingress to work with newest version of minikube (1.23.0)
+    *[ingress.yaml](./helm/ingress.yaml)*:
 
-- Configuring all services using a custom helm chart (remove yaml content).
+    ```yaml
+    apiVersion: v1
+    kind: Service
+    metadata:
+    name: traefik
+    spec:
+    selector:
+        k8s-app: traefik-ingress-lb
+    ports:
+    - name: web
+        port: 80
+        targetPort: 8080
+    ---
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+    name: myingress
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
 
-- Add scripts to run these steps
+    spec:
+    rules:
+        - host: hello-world.local
+        http:
+            paths:
+            - path: /
+                backend:
+                serviceName: tr-webapp
+                servicePort: 8080
+    ```
+
+1. Apply the yaml file:
+
+    ```console
+    [roberto@vmlab01 traefik-yaml]$ kubectl apply -f ingress.yaml --namespace tr-webapp-ns
+    Warning: networking.k8s.io/v1beta1 Ingress is deprecated in v1.19+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress
+    ingress.networking.k8s.io/myingress created
+    ```
+
+1. Check service and ingress resources
+
+    ```console
+    [roberto@vmlab01 helm]$ kubectl get svc --namespace tr-webapp-ns
+    NAME        TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
+    tr-webapp   NodePort       10.97.69.37    <none>        8080:32725/TCP               16m
+    traefik     LoadBalancer   10.100.12.11   <pending>     80:32039/TCP,443:31210/TCP   13m
+    ```
+
+    ```console
+    [roberto@vmlab01 helm]$ kubectl get ingress --namespace tr-webapp-ns
+    NAME        CLASS    HOSTS               ADDRESS        PORTS   AGE
+    myingress   <none>   hello-world.local   192.168.49.2   80      4m5s
+    ```
+
+    (you should wait a few seconds until "ADDRESS" list an IP address for the ingress resource)
+
+1. Create a static entry in /etc/hosts to point to the new hostname hello-world.local
+
+    ```console
+    sudo echo "$(minikube ip) hello-world.local" >> /etc/hosts
+    ```
+
+1. Now you should be able to access the url:
+
+    ```console
+    [roberto@vmlab01 helm]$ curl hello-world.local
+    Hello World
+    ```
+
+## Summary
+
+These are the required steps, assuming you already have all tools installed
+
+1. Clone this project in an empty directory
+
+    ```console
+    git clone https://github.com/rjrpaz/deploy-using-helm.git
+    cd deploy-using-helm
+    ```
+
+1. Create the namespace
+
+    ```console
+    kubectl create namespace tr-webapp-ns
+    ```
+
+1. Install the app using the chart:
+
+    ```console
+    helm install tr-webapp ./helm/tr-webapp --namespace tr-webapp-ns
+    ```
+
+1. Install traefik
+
+    ```console
+    helm install traefik traefik/traefik --namespace tr-webapp-ns
+    ```
+
+1. Apply the ingress file:
+
+    ```console
+    kubectl apply -f helm/ingress.yaml --namespace tr-webapp-ns
+    ```
+
+1. Create a static entry in /etc/hosts to point to the new hostname hello-world.local
+
+    ```console
+    sudo echo "$(minikube ip) hello-world.local" >> /etc/hosts
+    ```
+
+1. Check reachability to the url:
+
+    ```console
+    curl hello-world.local
+    ```
+
+    You should get a "Hello World" message
+
+## Next steps
+
+- Get ingress plugin to work with a newest version of minikube (Current version: 1.23.0).
+
+- Configure all services using a custom helm chart (remove yaml content).
+
+- Upload the helm char to a public repository.
+
+- Add scripts (ansible?, terraform?) to deploy the artifact.
