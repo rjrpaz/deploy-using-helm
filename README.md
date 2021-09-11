@@ -219,7 +219,7 @@ For this step we are going to use a public helm repos.
 1. Install traefik
 
     ```console
-    helm install traefik traefik/traefik --namespace hello-world
+    helm install traefik-ingress-service traefik/traefik --namespace tr-webapp-ns
     ```
 
 1. List pods in the namespace to check status
@@ -233,6 +233,16 @@ For this step we are going to use a public helm repos.
 
 ## Make Traefik an ingress point to access the "Hello World" page
 
+You can check the same solution using nginx ingress [here](./Nginx_ingress.md)
+
 References:
 
 - [https://minikube.sigs.k8s.io/docs/handbook/accessing/](https://minikube.sigs.k8s.io/docs/handbook/accessing/)
+
+## TODO
+
+- Make ingress to work with newest version of minikube (1.23.0)
+
+- Configuring all services using a custom helm chart (remove yaml content).
+
+- Add scripts to run these steps

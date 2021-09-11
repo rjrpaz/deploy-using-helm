@@ -28,6 +28,12 @@ References:
 
     (this may takes a few minutes)
 
+1. Enable ingress add-on for Minukube:
+
+    ```console
+    minikube addons enable ingress
+    ```
+
 1. Test health of kubernetes cluster
 
     ```console
