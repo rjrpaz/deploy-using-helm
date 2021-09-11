@@ -233,7 +233,9 @@ For this step we are going to use a public helm repos.
 
 ## Make Traefik an ingress point to access the "Hello World" page
 
-You can check the same solution using nginx ingress [here](./Nginx_ingress.md)
+Alternative solution using nginx ingress [here](./Nginx_ingress.md)
+
+Alternative using traefik + yaml files [here](./Traefik-yaml.md)
 
 References:
 
