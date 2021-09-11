@@ -2,7 +2,7 @@
 
 The purpose of this lab is to develop a full provisioned pipeline to deploy a static web page.
 
-You can clone [this](https://github.com/rjrpaz/deploy-using-helm) repository to get some of the files that are we going to use during the lab.
+You can clone this repository to get some of the files that are we going to use during the lab.
 
 ## Objectives
 
@@ -14,7 +14,7 @@ You can clone [this](https://github.com/rjrpaz/deploy-using-helm) repository to 
 
 1. Make Traefik an ingress point to access the "Hello World" page
 
-1. Make the "Hello World" page accessible locally at [http://hello-world.local](http://hello-world.local)
+1. Make the "Hello World" page accessible locally at http://hello-world.local
 
 ## Requirements
 
