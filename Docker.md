@@ -44,7 +44,13 @@ Reference: [https://docs.docker.com/engine/install/centos/](https://docs.docker.
     sudo usermod -aG docker $USER
     ```
 
-    You need to re-login for this last modification to be active.
+    Run the following command
+
+    ```console
+    newgrp docker
+    ```
+
+    to update group information in the current session. Alternatively, you can simply re-login.
 
 1. Run a test to confirm docker is working
 
