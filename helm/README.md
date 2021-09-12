@@ -96,3 +96,83 @@ References:
     ```
 
 1. Press <kbd>Ctrl + C</kbd> to interrupt the port forwarding
+
+## Publishing the chart
+
+References:
+
+- [https://helm.sh/docs/topics/chart_repository/#github-pages-example](https://helm.sh/docs/topics/chart_repository/#github-pages-example)
+
+We are going to use github pages as repository for the helm chart.
+
+1. Create a *gh-pages* branch in the github repository:
+
+1. Configure *Settings* --> *pages*. Enable gh-pages if needed and configure the root folder that will store the documentation. In this case, the root directory of the project will store the documentation and the package.
+
+1. Change to root directory for the project and run:
+
+    ```console
+    helm package helm/tr-webapp
+    ```
+
+    this will create a helm package named *tr-webapp-0.1.0.tgz*.
+
+1. Create index file for the package repository
+
+    ```console
+    helm repo index . --url http://www.robertopaz.com.ar/deploy-using-helm/
+    ```
+
+    this should generate a *index.yaml* file.
+
+1. Upload the branch:
+
+    ```console
+    git push origin gh-pages
+    ```
+
+1. Now you can use this as a helm repo:
+
+    Add the repo:
+
+    ```console
+    [dxcuser@vmlab01 ~]$ helm repo add tr-webapp https://www.robertopaz.com.ar/deploy-using-helm/
+    "tr-webapp" has been added to your repositories
+    ```
+
+    Install the package:
+
+    ```console
+    [dxcuser@vmlab01 ~]$ helm install tr-webapp tr-webapp/tr-webapp
+
+    NAME: tr-webapp
+    LAST DEPLOYED: Sun Sep 12 16:52:52 2021
+    NAMESPACE: default
+    STATUS: deployed
+    REVISION: 1
+    NOTES:
+    1. Get the application URL by running these commands:
+    export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services tr-webapp)
+    export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+    echo http://$NODE_IP:$NODE_PORT
+    ```
+
+    List installed packages:
+
+    ```console
+    [dxcuser@vmlab01 ~]$ helm list
+    NAME            NAMESPACE       REVISION        UPDATED                                  STATUS          CHART           APP VERSION
+    tr-webapp       default         1               2021-09-12 16:52:52.413712448 -0400 EDT  deployed        tr-webapp-0.1.0 0.1.0
+    ```
+
+    Run last commands suggested from the installation and confirm the app is running:
+
+    ```console
+    [dxcuser@vmlab01 ~]$ export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services tr-webapp)
+    [dxcuser@vmlab01 ~]$ export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+    [dxcuser@vmlab01 ~]$ echo http://$NODE_IP:$NODE_PORT
+    http://192.168.49.2:32086
+
+    [dxcuser@vmlab01 ~]$ curl http://192.168.49.2:32086
+    Hello World
+    ```

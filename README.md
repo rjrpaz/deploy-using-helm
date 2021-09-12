@@ -170,6 +170,4 @@ While I was investigating this, I tried some alternative solutions listed below:
 
 - Configure all services using a custom helm chart (remove yaml content).
 
-- Upload the helm char to a public repository.
-
 - Add scripts (ansible?, terraform?) to deploy the artifact.
