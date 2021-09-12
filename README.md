@@ -52,6 +52,11 @@ These are the required steps, assuming you already have all required tools alrea
 
     ```console
     git clone https://github.com/rjrpaz/deploy-using-helm.git
+    ```
+
+1. Change location to the new directory
+
+    ```console
     cd deploy-using-helm
     ```
 
@@ -67,11 +72,25 @@ These are the required steps, assuming you already have all required tools alrea
     kubectl create namespace tr-webapp-ns
     ```
 
-1. Install the app using the chart:
+1. Install the app:
 
-    ```console
-    helm install tr-webapp ./helm/tr-webapp --namespace tr-webapp-ns
-    ```
+    1. Add helm repo for the app
+
+        ```console
+        helm repo add tr-webapp https://www.robertopaz.com.ar/deploy-using-helm/
+        ```
+
+    1. If required, update helm
+
+        ```console
+        helm repo update
+        ```
+
+    1. Install traefik
+
+        ```console
+        helm install tr-webapp tr-webapp/tr-webapp --namespace tr-webapp-ns
+        ```
 
 1. Install traefik
 
@@ -81,7 +100,7 @@ These are the required steps, assuming you already have all required tools alrea
         helm repo add traefik https://helm.traefik.io/traefik
         ```
 
-    1. Update helm
+    1. If required, update helm
 
         ```console
         helm repo update
@@ -106,6 +125,8 @@ These are the required steps, assuming you already have all required tools alrea
     tr-webapp-86b97d69cc-znpvl   1/1     Running   0          4m6s
     traefik-7594596bbc-6mzg9     1/1     Running   0          39s
     ```
+
+    Wait until both containers are in *Running* STATUS.
 
 1. Apply the ingress file:
 
