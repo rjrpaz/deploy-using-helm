@@ -265,5 +265,3 @@ While I was investigating this, I tried some alternative solutions listed below:
 - Get ingress plugin to work with a newest version of minikube (Current version: 1.23.0).
 
 - Configure all services using a custom helm chart (remove yaml content).
-
-- Add scripts (ansible?, terraform?) to deploy the artifact.
