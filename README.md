@@ -1,4 +1,4 @@
-# Deploy a static web page helm and traefik
+# Deploy a static web page using helm and traefik
 
 The purpose of this lab is to develop a full provisioned pipeline to deploy a static web page.
 
@@ -38,7 +38,7 @@ All required files and scripts for this deployment are included in this project.
 
 - How to create the helm chart: [./helm/README.md](./helm/README.md)
 
-## Deploy the app
+## Deploy the app (manual steps)
 
 References:
 
@@ -52,6 +52,11 @@ These are the required steps, assuming you already have all required tools alrea
 
     ```console
     git clone https://github.com/rjrpaz/deploy-using-helm.git
+    ```
+
+1. Change location to the new directory
+
+    ```console
     cd deploy-using-helm
     ```
 
@@ -67,11 +72,25 @@ These are the required steps, assuming you already have all required tools alrea
     kubectl create namespace tr-webapp-ns
     ```
 
-1. Install the app using the chart:
+1. Install the app:
 
-    ```console
-    helm install tr-webapp ./helm/tr-webapp --namespace tr-webapp-ns
-    ```
+    1. Add helm repo for the app
+
+        ```console
+        helm repo add tr-webapp https://www.robertopaz.com.ar/deploy-using-helm/
+        ```
+
+    1. If required, update helm
+
+        ```console
+        helm repo update
+        ```
+
+    1. Install traefik
+
+        ```console
+        helm install tr-webapp tr-webapp/tr-webapp --namespace tr-webapp-ns
+        ```
 
 1. Install traefik
 
@@ -81,7 +100,7 @@ These are the required steps, assuming you already have all required tools alrea
         helm repo add traefik https://helm.traefik.io/traefik
         ```
 
-    1. Update helm
+    1. If required, update helm
 
         ```console
         helm repo update
@@ -106,6 +125,8 @@ These are the required steps, assuming you already have all required tools alrea
     tr-webapp-86b97d69cc-znpvl   1/1     Running   0          4m6s
     traefik-7594596bbc-6mzg9     1/1     Running   0          39s
     ```
+
+    Wait until both containers are in *Running* STATUS.
 
 1. Apply the ingress file:
 
@@ -156,7 +177,82 @@ These are the required steps, assuming you already have all required tools alrea
 
     You should get a "Hello World" message
 
-## Alternative solutions to the same issue
+## Deploy the app using terraform
+
+References:
+
+- [https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs)
+
+- [https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release)
+
+- [https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/ingress)
+
+1. You should have terraform installed. You can install terraform in CentOS using packet manager:
+
+    ```console
+    sudo yum -y install terraform
+    ```
+
+1. Assure that ingress addon for minikube is already installed
+
+    ```console
+    minikube addons enable ingress
+    ```
+
+1. Clone this project in an empty directory
+
+    ```console
+    git clone https://github.com/rjrpaz/deploy-using-helm.git
+    ```
+
+1. Change location where terraform code is located:
+
+    ```console
+    cd deploy-using-helm/terraform
+    ```
+
+1. Init terraform
+
+    ```console
+    terraform init
+    ```
+
+1. Apply terraform code
+
+    ```console
+    terraform apply --auto-approve
+    ```
+
+1. Check ingress resources
+
+    ```console
+    kubectl get ingress --namespace tr-webapp-ns
+    ```
+
+    It should return something like this:
+
+    ```console
+    NAME        CLASS    HOSTS               ADDRESS        PORTS   AGE
+    myingress   <none>   hello-world.local   192.168.49.2   80      6m24s
+    ```
+
+    (you should wait a few seconds until "ADDRESS" list an IP address for the ingress resource)
+
+1. Create a static entry in /etc/hosts to point to the new hostname hello-world.local
+
+    ```console
+    echo "$(minikube ip) hello-world.local" | sudo tee -a /etc/hosts
+    ```
+
+1. Check reachability to the url:
+
+    ```console
+    curl hello-world.local
+    ```
+
+    You should get a "Hello World" message
+
+## Alternative solutions to apply ingress entry point
 
 While I was investigating this, I tried some alternative solutions listed below:
 
@@ -169,7 +265,3 @@ While I was investigating this, I tried some alternative solutions listed below:
 - Get ingress plugin to work with a newest version of minikube (Current version: 1.23.0).
 
 - Configure all services using a custom helm chart (remove yaml content).
-
-- Upload the helm char to a public repository.
-
-- Add scripts (ansible?, terraform?) to deploy the artifact.
