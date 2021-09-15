@@ -14,7 +14,7 @@ You can clone this repository to get some of the files that are we going to use 
 
 1. Make Traefik an ingress point to access the "Hello World" page
 
-1. Make the "Hello World" page accessible locally at http://hello-world.local
+1. Make the "Hello World" page accessible locally at `http://hello-world.local`
 
 ## Requirements
 
