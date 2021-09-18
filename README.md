@@ -86,7 +86,7 @@ These are the required steps, assuming you already have all required tools alrea
         helm repo update
         ```
 
-    1. Install traefik
+    1. Install the app
 
         ```console
         helm install tr-webapp tr-webapp/tr-webapp --namespace tr-webapp-ns
@@ -106,7 +106,7 @@ These are the required steps, assuming you already have all required tools alrea
         helm repo update
         ```
 
-    1. Install the app
+    1. Install traefik
 
         ```console
         helm install traefik traefik/traefik --namespace tr-webapp-ns
